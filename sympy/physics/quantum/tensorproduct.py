@@ -344,6 +344,50 @@ def tensor_product_simp_Mul(e):
     else:
         return e
 
+def tensor_product_simp_Pow(e):
+    """Simplify a Pow with TensorProduct.
+
+    This function simplifies expressions of the form ``TensorProduct(...)^n``
+    by distributing the power to each argument in the tensor product.
+
+    Parameters
+    ==========
+
+    e : Expr
+        A power expression where the base is a ``TensorProduct``.
+
+    Returns
+    =======
+
+    e : Expr
+        A ``TensorProduct`` where each argument is raised to the given power.
+
+    Examples
+    ========
+
+    >>> from sympy.physics.quantum.tensorproduct import \
+                tensor_product_simp_Pow, TensorProduct
+    >>> from sympy import Symbol
+    >>> A = Symbol('A',commutative=False)
+    >>> B = Symbol('B',commutative=False)
+    >>> e = TensorProduct(A, B)**2
+    >>> tensor_product_simp_Pow(e)
+    (A**2)x(B**2)
+
+    """
+    if not isinstance(e, Pow):
+        return e
+    
+    base, exp = e.as_base_exp()
+    
+    # Check if the base is a TensorProduct
+    if isinstance(base, TensorProduct):
+        # Distribute the power to each argument
+        new_args = [arg**exp for arg in base.args]
+        return TensorProduct(*new_args)
+    else:
+        # If not a TensorProduct, just return the simplified base raised to exp
+        return tensor_product_simp(base)**exp
 
 def tensor_product_simp(e, **hints):
     """Try to simplify and combine TensorProducts.
@@ -382,7 +426,7 @@ def tensor_product_simp(e, **hints):
     if isinstance(e, Add):
         return Add(*[tensor_product_simp(arg) for arg in e.args])
     elif isinstance(e, Pow):
-        return tensor_product_simp(e.base) ** e.exp
+        return tensor_product_simp_Pow(e)
     elif isinstance(e, Mul):
         return tensor_product_simp_Mul(e)
     elif isinstance(e, Commutator):
