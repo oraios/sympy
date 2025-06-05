@@ -48,7 +48,45 @@ def test_tensor_product_commutator():
 def test_tensor_product_simp():
     assert tensor_product_simp(TP(A, B)*TP(B, C)) == TP(A*B, B*C)
 
+def test_tensor_product_simp_pow():
+    """Test tensor_product_simp for powers of TensorProducts."""
+    # Test with commutative scalars
+    assert tensor_product_simp(TP(1, 1)**2) == TP(1, 1)
+    assert tensor_product_simp(TP(2, 3)**2) == TP(4, 9)
+    assert tensor_product_simp(TP(x, x)**2) == TP(x**2, x**2)
+    
+    # Test with non-commutative symbols
+    assert tensor_product_simp(TP(A, B)**2) == TP(A**2, B**2)
+    assert tensor_product_simp(TP(A, B, C)**2) == TP(A**2, B**2, C**2)
+    assert tensor_product_simp(TP(A, B)**3) == TP(A**3, B**3)
+    
+    # Test with mixed commutative and non-commutative
+    assert tensor_product_simp(TP(2, A)**2) == TP(4, A**2)
+    assert tensor_product_simp(TP(x, B)**2) == TP(x**2, B**2)
+    
+    # Test nested case: simplify inside a Mul
+    assert tensor_product_simp(3*TP(A, B)**2) == 3*TP(A**2, B**2)
+    
+    # Test that non-TensorProduct powers are handled correctly
+    assert tensor_product_simp(A**2) == A**2
+    assert tensor_product_simp((A*B)**2) == (A*B)**2
 
+def test_tensor_product_simp_pow_issue():
+    """Test the specific examples from the issue."""
+    from sympy.physics.paulialgebra import Pauli
+    
+    # Test case 1: (1x1)**2
+    t1 = TP(1, 1)**2
+    assert tensor_product_simp(t1) == TP(1, 1)
+    
+    # Test case 2: (1xsigma_3)**2
+    # Note: Pauli(3)**2 = 1 (identity)
+    t2 = TP(1, Pauli(3))**2
+    assert tensor_product_simp(t2) == TP(1, 1)
+    
+    # Additional test with symbolic power
+    n = symbols('n')
+    assert tensor_product_simp(TP(A, B)**n) == TP(A**n, B**n)
 def test_issue_5923():
     # most of the issue regarding sympification of args has been handled
     # and is tested internally by the use of args_cnc through the quantum
